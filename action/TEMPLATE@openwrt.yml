@@ -1,0 +1,269 @@
+
+# $GITHUB_WORKFLOW=filename_with_fullpath(.yml)
+# $GITHUB_WORKSPACE=rootDir_in_repo_workdir
+
+# fileName: <FIRMWARE>.<MODEL_NAME>[__with_small].yml
+#   small : feeds == packages
+# dir: config_<FIRMWARE>
+#   $dir/compile/config/models/<MODEL_NAME>.conf
+
+
+# name: some string
+name: <<<TODONAME>>>
+
+on:
+  repository_dispatch:
+  workflow_dispatch:
+    inputs:
+      ssh:
+        description: 'SSH connection to Actions'
+        required: false
+        default: 'false'
+  # schedule:
+  #   - cron: 0 18 * * 5
+
+env:
+  __ROOT_DIR__: <<<TODODIR>>>
+  MODEL_NAME: <<<TODOMODEL_NAME>>>
+  FLAG_SMALL: <<<TODOFLAG_SMALL>>>
+  TZ: Asia/Shanghai
+  REPO_URL: https://github.com/openwrt/openwrt
+  REPO_BRANCH: openwrt-21.02
+  FEEDS_CONF: compile/feeds.conf/feeds.conf.default
+  CONFIG_FILE: compile/config.tmp
+  DIY_P1_SH: compile/scripts/diy-part1.sh
+  DIY_P2_SH: compile/scripts/diy-part2.sh
+  UPLOAD_BIN_DIR: false
+  UPLOAD_FIRMWARE: true
+  UPLOAD_COWTRANSFER: false
+  UPLOAD_WETRANSFER: true
+  UPLOAD_RELEASE: false
+
+
+jobs:
+  build:
+    runs-on: ubuntu-18.04
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@main
+
+    - name: gen feeds and config
+      run : |
+        [ -e "$__ROOT_DIR__/$CONFIG_FILE" ] && rm "$__ROOT_DIR__/$CONFIG_FILE"
+        if [ -e "$__ROOT_DIR__/compile/config/models/${MODEL_NAME}.conf" ];then \
+            cat "$__ROOT_DIR__/compile/config/models/${MODEL_NAME}.conf" \
+              "$__ROOT_DIR__/compile/config/"*.conf > "$__ROOT_DIR__/$CONFIG_FILE" && ls -l "$__ROOT_DIR__/$CONFIG_FILE" ; \
+            if $FLAG_SMALL; then ( cat "$__ROOT_DIR__/compile/config/"*.conf.small >> "$__ROOT_DIR__/$CONFIG_FILE" ); \
+              mv "$__ROOT_DIR__/$FEEDS_CONF.small" "$__ROOT_DIR__/$FEEDS_CONF" && ls -l "$__ROOT_DIR__/$FEEDS_CONF" ; \
+            fi ; \
+        fi
+
+
+    - name: Initialization environment
+      env:
+        DEBIAN_FRONTEND: noninteractive
+      run: |
+        sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc
+        sudo -E apt-get -qq update
+        sudo -E apt-get -qq install $(curl -fsSL git.io/depends-ubuntu-1804)
+        sudo -E apt-get -qq install tree
+        sudo -E apt-get -qq autoremove --purge
+        sudo -E apt-get -qq clean
+        sudo timedatectl set-timezone "$TZ"
+        sudo mkdir -p /workdir
+        sudo chown $USER:$GROUPS /workdir
+
+
+
+    - name: Clone source code
+      working-directory: /workdir
+      run: |
+        df -hT $PWD
+        git clone --single-branch -b $REPO_BRANCH $REPO_URL  openwrt
+        ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
+
+    - name: Load custom feeds
+      run: |
+        [ -e $__ROOT_DIR__/$FEEDS_CONF ] && \
+            mv $__ROOT_DIR__/$FEEDS_CONF openwrt/feeds.conf.default && echo "[INFO] mv feeds.conf.default to openwrt/"
+        chmod +x $__ROOT_DIR__/$DIY_P1_SH
+        cd openwrt/
+        $GITHUB_WORKSPACE/$__ROOT_DIR__/$DIY_P1_SH
+
+    - name: Update feeds
+      run: cd openwrt && ./scripts/feeds update -a
+
+    - name: Install feeds
+      run: cd openwrt && ./scripts/feeds install -a
+
+    - name: Load custom configuration
+      run: |
+        [ -d $__ROOT_DIR__/files/ ] && \
+            mv $__ROOT_DIR__/files/ openwrt/ && echo "[Info] mv files/ to openwrt/"
+        [ -f $__ROOT_DIR__/$CONFIG_FILE ] && \
+            mv $__ROOT_DIR__/$CONFIG_FILE openwrt/.config && echo "[Info] mv .config to openwrt/"
+        chmod +x $__ROOT_DIR__/$DIY_P2_SH
+        cd openwrt/
+        $GITHUB_WORKSPACE/$__ROOT_DIR__/$DIY_P2_SH
+
+    - name: SSH connection to Actions
+      uses: P3TERX/ssh2actions@v1.0.0
+      if: (github.event.inputs.ssh == 'true' && github.event.inputs.ssh  != 'false') || contains(github.event.action, 'ssh')
+      env:
+        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+    
+    - name: Make defconfig
+      id: defconfig
+      run: |
+        cd openwrt
+        make defconfig
+        echo "######################"
+        cat .config | grep -Ev "^ *#" 
+        echo "######################"
+
+    - name: Download package
+      id: package
+      run: |
+        cd openwrt
+        make download -j8
+        find dl -size -1024c -exec ls -l {} \;
+        find dl -size -1024c -exec rm -f {} \;
+
+    - name: Compile the firmware I
+      id: compileI
+      run: |
+        cd openwrt
+        echo -e "$(nproc) thread compile"
+        if make -j$(nproc) ;then echo "::set-output name=status::success";else echo "::set-output name=status::failed"; fi
+
+
+    - name: Compile the firmware II
+      id: compileII
+      if: steps.compileI.outputs.status == 'failed'
+      run: |
+        cd openwrt
+        echo -e "$(nproc) thread compile"
+        if make -j$(nproc) ;then echo "::set-output name=status::success";else echo "::set-output name=status::failed";  fi
+
+    - name: Compile the firmware III
+      id: compileIII
+      if: steps.compileII.outputs.status == 'failed'
+      run: |
+        cd openwrt
+        echo -e "1 thread compile"
+        if make -j1 ;then echo "::set-output name=status::success";else echo "::set-output name=status::failed";  fi
+
+    - name: Compile the firmware IV
+      id: compileIV
+      if: steps.compileIII.outputs.status == 'failed'
+      run: |
+        cd openwrt
+        echo -e "1 thread compile"
+        if make -j1 V=s ;then echo "::set-output name=status::success";else echo "::set-output name=status::failed";  fi
+
+    - name: Compile the firmware finish
+      id: compile
+      if: steps.compileI.outputs.status == 'success' || steps.compileII.outputs.status == 'success' || steps.compileIII.outputs.status == 'success' || steps.compileIV.outputs.status == 'success'
+      run: |
+        cd openwrt
+        echo "::set-output name=status::success"
+        grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -r 's/.*DEVICE_(.*)=y/\1/' > DEVICE_NAME
+        [ -s DEVICE_NAME ] && echo "DEVICE_NAME=_$(cat DEVICE_NAME)" >> $GITHUB_ENV
+        echo "FILE_DATE=_$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
+
+    - name: check Error if Compile failed
+      id: compileChecker
+      if: steps.compileI.outputs.status == 'failed' && steps.compileII.outputs.status == 'failed' && steps.compileIII.outputs.status == 'failed' && steps.compileIV.outputs.status == 'failed'
+      run: |
+        make -j1 V=sss
+
+    - name: Check space usage
+      if: (!cancelled())
+      run: df -hT
+
+    - name: Upload bin directory
+      uses: actions/upload-artifact@main
+      if: steps.compile.outputs.status == 'success' && env.UPLOAD_BIN_DIR == 'true'
+      with:
+        name: OpenWrt_bin${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
+        path: openwrt/bin
+
+    - name: Organize files
+      id: organize
+      if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
+      run: |
+        cd openwrt/bin/targets/*/*
+        rm -rf packages
+        echo "FIRMWARE=$PWD" >> $GITHUB_ENV
+        echo "::set-output name=status::success"
+
+    - name: copy .config files to target
+      if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
+      run: |
+        if $FLAG_SMALL;then _suffix="_with_small";fi
+        name=${MODEL_NAME}$_suffix.config
+        cp openwrt/.config  ${{ env.FIRMWARE }}/$name
+
+    - name: Upload firmware directory
+      uses: actions/upload-artifact@main
+      if: steps.organize.outputs.status == 'success' && !cancelled()
+      with:
+        name: OpenWrt_firmware${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
+        path: ${{ env.FIRMWARE }}
+
+    - name: Upload firmware to cowtransfer
+      id: cowtransfer
+      if: steps.organize.outputs.status == 'success' && env.UPLOAD_COWTRANSFER == 'true' && !cancelled()
+      run: |
+        curl -fsSL git.io/file-transfer | sh
+        ./transfer cow --block 2621440 -s -p 64 --no-progress ${FIRMWARE} 2>&1 | tee cowtransfer.log
+        echo "::warning file=cowtransfer.com::$(cat cowtransfer.log | grep https)"
+        echo "::set-output name=url::$(cat cowtransfer.log | grep https | cut -f3 -d" ")"
+
+#UPLOAD_WETRANSFER
+    - name: Upload firmware to WeTransfer
+      id: wetransfer
+      if: steps.organize.outputs.status == 'success' && env.UPLOAD_WETRANSFER == 'true' && !cancelled()
+      run: |
+        curl -fsSL git.io/file-transfer | sh
+        ./transfer wet -s -p 16 --no-progress ${FIRMWARE} 2>&1 | tee wetransfer.log
+        echo "::warning file=wetransfer.com::$(cat wetransfer.log | grep https)"
+        echo "::set-output name=url::$(cat wetransfer.log | grep https | cut -f3 -d" ")"
+        
+    - name: Generate release tag
+      id: tag
+      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
+      run: |
+        echo "::set-output name=release_tag::$(date +"%Y.%m.%d-%H%M")"
+        touch release.txt
+        [ $UPLOAD_COWTRANSFER = true ] && echo "🔗 [Cowtransfer](${{ steps.cowtransfer.outputs.url }})" >> release.txt
+        [ $UPLOAD_WETRANSFER = true ] && echo "🔗 [WeTransfer](${{ steps.wetransfer.outputs.url }})" >> release.txt
+        echo "::set-output name=status::success"
+#release        
+    - name: Upload firmware to release
+      uses: softprops/action-gh-release@v1
+      if: steps.tag.outputs.status == 'success' && !cancelled()
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.tag.outputs.release_tag }}
+        body_path: release.txt
+        files: ${{ env.FIRMWARE }}/*
+    
+    - name: Delete workflow runs
+#      uses: GitRML/delete-workflow-runs@main
+      uses: Mattraks/delete-workflow-runs@main
+      with:
+        retain_days: 5
+        keep_minimum_runs: 5
+
+    - name: Remove old Releases
+      uses: dev-drprasad/delete-older-releases@v0.1.0
+      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
+      with:
+        keep_latest: 7
+        delete_tags: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

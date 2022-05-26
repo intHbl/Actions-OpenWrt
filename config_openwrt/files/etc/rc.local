@@ -1,0 +1,16 @@
+
+
+
+runXYZ(){
+    if [ -f "$1" ];then
+        ash "$1" &
+    fi
+}
+
+entry="/root/entrypoint.sh"
+runXYZ "$entry"
+
+runXYZ "/root/auto_init__.sh"
+
+exit 0
+
