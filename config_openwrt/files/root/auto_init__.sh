@@ -9,6 +9,7 @@ ffff(){
 
     for sss in "$1/"*/INSTALL.SH;do
         if [ -f "$sss" ];then
+            echo "[INFO] run $ssss"
             sh "$sss" "$success"
             if grep -E "^OK$" "$success";then
                 FLAG_DONE=true
@@ -20,6 +21,21 @@ ffff(){
     done
 }
 
+for i in 1 2 3;do
+    if [ -e /dev/sda ];then
+        break
+    fi
+
+    if [ -e /dev/sdb ];then
+        break
+    fi
+
+    if [ -e /dev/sdc ];then
+        break
+    fi
+
+    sleep 10
+done
 
 for i in /dev/sd*[123];do
     if [ -e "$i" ];then
@@ -28,7 +44,7 @@ for i in /dev/sd*[123];do
         mntp="/tmp/mntHERE/$name"
         mkdir -p  "$mntp" || true
         if mount "$i" "$mntp";then
-            ffff "$mntp"
+            ffff "$mntp" | tee /tmp/__auto_init__.log
         fi
     fi
 
