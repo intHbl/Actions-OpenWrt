@@ -7,6 +7,7 @@
     if [ -z "$1" ];then
         echo "[E] need arg1"
         echo "   usage $0 <dirname>"
+        echo "     arg1 == 'config_<xxx>'"
         exit 1
     fi
 
