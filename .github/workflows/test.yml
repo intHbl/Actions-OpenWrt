@@ -104,12 +104,10 @@ jobs:
         
 
     - name: test2
-      run: |
-      $GITHUB_WORKSPACE/$__ROOT_DIR__/$DIY_P1_SH
+      run:  $GITHUB_WORKSPACE/$__ROOT_DIR__/$DIY_P1_SH
 
     - name: test3
-      run: |
-      bash $GITHUB_WORKSPACE/$__ROOT_DIR__/$DIY_P1_SH
+      run: bash $GITHUB_WORKSPACE/$__ROOT_DIR__/$DIY_P1_SH
 
     # - name: Update feeds
     #   run: cd openwrt && ./scripts/feeds update -a
