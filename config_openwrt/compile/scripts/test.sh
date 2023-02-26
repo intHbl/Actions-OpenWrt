@@ -2,7 +2,7 @@
 
 
 log="/tmp/test.log"
-for i in `seq 1 1000`;
+for i in `seq 1 1000`;do
     if [ -e "$log.1.$i" ];then
         continue
     fi
@@ -10,7 +10,7 @@ for i in `seq 1 1000`;
     break
 done
 
-for i in `seq 1 1000`;
+for i in `seq 1 1000`;do
     if [ -e "$log.2.$i" ];then
         continue
     fi
