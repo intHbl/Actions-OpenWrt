@@ -104,27 +104,31 @@ jobs:
       id: test3
       run: |
         echo "status=success" >> $GITHUB_STATE
+        echo "status=success" >> $GITHUB_OUTPUT
         bash $GITHUB_WORKSPACE/$__ROOT_DIR__/$TEST_SH
         echo "status=failed" >> $GITHUB_STATE
+        echo "status=failed" >> $GITHUB_OUTPUT
         echo "status=ENV3" >> $GITHUB_ENV
+    # GITHUB_ENV for env
+    # GITHUB_OUTPUT for steps.<id>.outputs.<key>
         
     - name: stateN
-      if: steps.test3.state.status == 'failed'
+      if: steps.test3.outputs.status == 'failed'
       run : 
         echo failed > /tmp/_3-failed
     
     - name: stateN2
-      if: ${{ steps.test3.state.status == 'failed' }}
+      if: ${{ steps.test3.outputs.status == 'failed' }}
       run : 
         echo failed > /tmp/_3-failed
         
     - name: stateY
-      if: steps.test3.state.status == 'success'
+      if: steps.test3.outputs.status == 'success'
       run : 
         echo failed > /tmp/_3-success
         
     - name: stateY2
-      if: ${{ steps.test3.state.status == 'success' }}
+      if: ${{ steps.test3.outputs.status == 'success' }}
       run : 
         echo failed > /tmp/_3-success
         
@@ -141,8 +145,8 @@ jobs:
       run :  |
         echo '$GITHUB_OUTPUT  $GITHUB_ENV  $GITHUB_STATE' > /tmp/__all.log
         echo "${GITHUB_OUTPUT}  ${GITHUB_ENV}  ${GITHUB_STATE}" >> /tmp/__all.log
-        echo "state=${{steps.test4.state.status}}" "output=${{steps.test4.output.status}}" "env4=${{steps.test4.env.status}}" >> /tmp/__all.log
-        echo "state3=${{steps.test3.state.status}}" "output3=${{steps.test3.output.status}}" "env3=${{steps.test3.env.status}}" >> /tmp/__all.log
+        echo "state=${{steps.test4.state.status}}" "output=${{steps.test4.outputs.status}}" "env4=${{steps.test4.env.status}}" >> /tmp/__all.log
+        echo "state3=${{steps.test3.state.status}}" "output3=${{steps.test3.outputs.status}}" "env3=${{steps.test3.env.status}}" >> /tmp/__all.log
     
 #     - name: stateY2
 #       if: steps.test4.outputs.status == 'success'
