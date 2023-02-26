@@ -171,6 +171,12 @@ jobs:
       if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
       run: cp openwrt/.config  ${{ env.FIRMWARE }}/${MODEL_NAME}.config
 
+    - name: some info 
+      run:  |
+        echo "::warning file=FLAG_SMALL::${FLAG_SMALL}"
+        echo "::warning file=sysupgrade::$(ls -alF "$FIRMWARE" | grep -i sysupgrade)"
+         
+
 # artifact
     - name: Upload firmware directory
       uses: actions/upload-artifact@main

@@ -170,18 +170,23 @@ jobs:
 
     - name: copy .config files to target
       if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
-      run: |
-        if $FLAG_SMALL;then _suffix="_with_small";fi
-        name=${MODEL_NAME}$_suffix.config
-        cp openwrt/.config  ${{ env.FIRMWARE }}/$name
+      run: cp openwrt/.config  ${{ env.FIRMWARE }}/${MODEL_NAME}.config
 
+    - name: some info 
+      run:  |
+        echo "::warning file=FLAG_SMALL::${FLAG_SMALL}"
+        echo "::warning file=sysupgrade::$(ls -alF "$FIRMWARE" | grep -i sysupgrade)"
+         
+
+# artifact
     - name: Upload firmware directory
       uses: actions/upload-artifact@main
       if: steps.organize.outputs.status == 'success' && !cancelled()
       with:
-        name: OpenWrt_firmware${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
+        name: OpenWrt_${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}${{ env.FLAG_SMALL }}
         path: ${{ env.FIRMWARE }}
 
+# false
     - name: Upload firmware to cowtransfer
       id: cowtransfer
       if: steps.organize.outputs.status == 'success' && env.UPLOAD_COWTRANSFER == 'true' && !cancelled()
@@ -200,7 +205,8 @@ jobs:
         ./transfer wet -s -p 16 --no-progress ${FIRMWARE} 2>&1 | tee wetransfer.log
         echo "::warning file=wetransfer.com::$(cat wetransfer.log | grep https)"
         echo "url=$(cat wetransfer.log | grep https | cut -f3 -d" ")" >> $GITHUB_OUTPUT
-        
+
+# release @tag
     - name: Generate release tag
       id: tag
       if: env.UPLOAD_RELEASE == 'true' && !cancelled()
@@ -210,7 +216,7 @@ jobs:
         [ $UPLOAD_COWTRANSFER = true ] && echo "🔗 [Cowtransfer](${{ steps.cowtransfer.outputs.url }})" >> release.txt
         [ $UPLOAD_WETRANSFER = true ] && echo "🔗 [WeTransfer](${{ steps.wetransfer.outputs.url }})" >> release.txt
         echo "status=success" >> $GITHUB_OUTPUT
-#release        
+## release @upload
     - name: Upload firmware to release
       uses: softprops/action-gh-release@v1
       if: steps.tag.outputs.status == 'success' && !cancelled()
