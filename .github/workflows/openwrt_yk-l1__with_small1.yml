@@ -10,7 +10,7 @@
 
 
 # name: some string
-name: openwrt_yk-l1__with_small
+name: openwrt_yk-l1__with_small1
 
 on:
   repository_dispatch:
