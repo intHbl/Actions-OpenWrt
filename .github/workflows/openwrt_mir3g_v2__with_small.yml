@@ -28,8 +28,6 @@ env:
   MODEL_NAME: mir3g_v2
   FLAG_SMALL: small
   TZ: Asia/Shanghai
-  REPO_URL: https://github.com/openwrt/openwrt
-  REPO_BRANCH: openwrt-21.02
   FEEDS_CONF: compile/feeds.conf/feeds.conf.default
   CONFIG_FILE: compile/config.tmp
   DIY_P1_SH: compile/scripts/diy-part1.sh
@@ -47,8 +45,12 @@ jobs:
     # The ubuntu-18.04 environment is deprecated, consider switching to ubuntu-20.04(ubuntu-latest), or ubuntu-22.04 instead.
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@main
+    - uses: actions/checkout@v3
+
+    #- name: Checkout # name is optional
+    #  uses: actions/checkout@v3
+    #  with:
+    #    ref: <branch|tag|refHash>
 
     - name: gen feeds and config
       run : bash "action/gen_feeds_and_config.sh"
@@ -186,7 +188,7 @@ jobs:
         name: OpenWrt_${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}${{ env.FLAG_SMALL }}
         path: ${{ env.FIRMWARE }}
 
-# false
+# false {
     - name: Upload firmware to cowtransfer
       id: cowtransfer
       if: steps.organize.outputs.status == 'success' && env.UPLOAD_COWTRANSFER == 'true' && !cancelled()
@@ -195,6 +197,7 @@ jobs:
         ./transfer cow --block 2621440 -s -p 64 --no-progress ${FIRMWARE} 2>&1 | tee cowtransfer.log
         echo "::warning file=cowtransfer.com::$(cat cowtransfer.log | grep https)"
         echo "url=$(cat cowtransfer.log | grep https | cut -f3 -d" ")" >> $GITHUB_OUTPUT
+# }
 
 #UPLOAD_WETRANSFER
     - name: Upload firmware to WeTransfer
@@ -206,6 +209,7 @@ jobs:
         echo "::warning file=wetransfer.com::$(cat wetransfer.log | grep https)"
         echo "url=$(cat wetransfer.log | grep https | cut -f3 -d" ")" >> $GITHUB_OUTPUT
 
+## false {
 # release @tag
     - name: Generate release tag
       id: tag
@@ -226,7 +230,8 @@ jobs:
         tag_name: ${{ steps.tag.outputs.release_tag }}
         body_path: release.txt
         files: ${{ env.FIRMWARE }}/*
-    
+## }
+
     - name: Delete workflow runs
 #      uses: GitRML/delete-workflow-runs@main
       uses: Mattraks/delete-workflow-runs@main
@@ -234,6 +239,7 @@ jobs:
         retain_days: 5
         keep_minimum_runs: 5
 
+## false {
     - name: Remove old Releases
       uses: dev-drprasad/delete-older-releases@v0.1.0
       if: env.UPLOAD_RELEASE == 'true' && !cancelled()
@@ -242,3 +248,4 @@ jobs:
         delete_tags: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+## }
