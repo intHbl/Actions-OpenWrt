@@ -6,6 +6,18 @@
 # Blog: https://p3terx.com
 #=================================================
 
+cd "$GITHUB_WORKSPACE"
+
+if [ -e $__ROOT_DIR__/$FEEDS_CONF ];then
+    mv $__ROOT_DIR__/$FEEDS_CONF openwrt/feeds.conf.default
+    echo "[INFO] mv feeds.conf.default to openwrt/"
+fi
+
+
+cd openwrt/
+
+
+
 #更新feeds
 ./scripts/feeds update -a
 

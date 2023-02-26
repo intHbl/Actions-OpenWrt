@@ -1,5 +1,13 @@
 #!/bin/bash
 
+
+if [ -e $__ROOT_DIR__/$FEEDS_CONF ];then
+    mv $__ROOT_DIR__/$FEEDS_CONF openwrt/feeds.conf.default
+    echo "[INFO] mv feeds.conf.default to openwrt/"
+fi
+
+cd openwrt/
+
 # before feeds update & install
 
 echo "[INFO] do nothing"

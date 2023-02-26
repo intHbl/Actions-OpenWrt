@@ -3,6 +3,20 @@
 # after feeds update & install
 # Load custom configuration
 
+
+if [ -d $__ROOT_DIR__/files/ ];then
+    mv $__ROOT_DIR__/files/ openwrt/
+    echo "[Info] mv files/ to openwrt/"
+fi
+
+if [ -f $__ROOT_DIR__/$CONFIG_FILE ];then
+    mv $__ROOT_DIR__/$CONFIG_FILE openwrt/.config
+    echo "[Info] mv .config to openwrt/"
+fi
+
+
+#################
+
 echo "[fix] for v2..."
 
 # dir : $GITHUB_WORKSPACE==/home/runner/work/<repoName>/<repoName>/

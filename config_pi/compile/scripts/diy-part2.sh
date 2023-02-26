@@ -8,6 +8,26 @@
 # Blog: https://p3terx.com
 #============================================================
 
+cd "$GITHUB_WORKSPACE"
+
+if [ -d $__ROOT_DIR__/files/ ];then
+    mv $__ROOT_DIR__/files/ openwrt/
+    echo "[Info] mv files/ to openwrt/"
+fi
+
+if [ -f $__ROOT_DIR__/$CONFIG_FILE ];then
+    mv $__ROOT_DIR__/$CONFIG_FILE openwrt/.config
+    echo "[Info] mv .config to openwrt/"
+fi
+
+
+#################
+
+# dir : $GITHUB_WORKSPACE==/home/runner/work/<repoName>/<repoName>/
+cd openwrt/
+
+
+
 # Modify default IP
 sed -i 's/192.168.1.1/172.22.0.1/g' package/base-files/files/bin/config_generate
 
