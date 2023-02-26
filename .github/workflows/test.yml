@@ -113,7 +113,17 @@ jobs:
       run : 
         echo failed > /tmp/_3-failed
     
+    - name: stateN2
+      if: ${{ steps.test3.state.status == 'failed' }}
+      run : 
+        echo failed > /tmp/_3-failed
+        
     - name: stateY
+      if: steps.test3.state.status == 'success'
+      run : 
+        echo failed > /tmp/_3-success
+        
+    - name: stateY2
       if: ${{ steps.test3.state.status == 'success' }}
       run : 
         echo failed > /tmp/_3-success
