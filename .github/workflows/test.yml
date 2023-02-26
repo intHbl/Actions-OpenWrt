@@ -100,7 +100,38 @@ jobs:
       run:  $GITHUB_WORKSPACE/$__ROOT_DIR__/$TEST_SH
 
     - name: test3
-      run: bash $GITHUB_WORKSPACE/$__ROOT_DIR__/$TEST_SH
+      id: test3
+      run: |
+        echo "status=success" >> $GITHUB_STATE
+        bash $GITHUB_WORKSPACE/$__ROOT_DIR__/$TEST_SH
+        echo "status=failed" >> $GITHUB_STATE
+        
+    - name: stateN
+      if: steps.test3.outputs.status == 'failed'
+      run : 
+        echo failed > /tmp/_3-failed
+    
+    - name: stateY
+      if: steps.test3.outputs.status == 'success'
+      run : 
+        echo failed > /tmp/_3-success
+        
+    - name: test4
+      id: test4
+      run: |
+        echo "status=failed" >> $GITHUB_STATE
+        bash $GITHUB_WORKSPACE/$__ROOT_DIR__/$TEST_SH
+        echo "status=success" >> $GITHUB_STATE
+        
+    - name: stateN2
+      if: steps.test4.outputs.status == 'failed'
+      run : 
+        echo failed > /tmp/_4-failed
+    
+    - name: stateY2
+      if: steps.test4.outputs.status == 'success'
+      run : 
+        echo failed > /tmp/_4-success
 
     # - name: Update feeds
     #   run: cd openwrt && ./scripts/feeds update -a
