@@ -130,7 +130,7 @@ jobs:
     - name: stateN2
       run :  |
         echo '$GITHUB_OUTPUT  $GITHUB_ENV  $GITHUB_STATE' > /tmp/__all.log
-        echo "${{GITHUB_OUTPUT}}  ${{GITHUB_ENV}}  ${{GITHUB_STATE}}" >> /tmp/__all.log
+        echo "${GITHUB_OUTPUT}  ${GITHUB_ENV}  ${GITHUB_STATE}" >> /tmp/__all.log
         echo "state=${{steps.test4.state.status}}" "output=${{steps.test4.output.status}}" "env4=${{steps.test4.env.status}}" >> /tmp/__all.log
         echo "state3=${{steps.test3.state.status}}" "output3=${{steps.test3.output.status}}" "env3=${{steps.test3.env.status}}" >> /tmp/__all.log
     
