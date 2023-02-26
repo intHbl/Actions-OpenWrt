@@ -26,7 +26,7 @@ on:
 env:
   __ROOT_DIR__: config_openwrt
   MODEL_NAME: xy-c5
-  FLAG_SMALL: small
+  FLAG_SMALL: small1
   TZ: Asia/Shanghai
   REPO_URL: https://github.com/openwrt/openwrt
   REPO_BRANCH: openwrt-21.02

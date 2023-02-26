@@ -26,7 +26,7 @@ on:
 env:
   __ROOT_DIR__: config_openwrt
   MODEL_NAME: yk-l1
-  FLAG_SMALL: true
+  FLAG_SMALL: small
   TZ: Asia/Shanghai
   REPO_URL: https://github.com/openwrt/openwrt
   REPO_BRANCH: openwrt-21.02
@@ -151,6 +151,7 @@ jobs:
       if: (!cancelled())
       run: df -hT
 
+# false -> x
     - name: Upload bin directory
       uses: actions/upload-artifact@main
       if: steps.compile.outputs.status == 'success' && env.UPLOAD_BIN_DIR == 'true'

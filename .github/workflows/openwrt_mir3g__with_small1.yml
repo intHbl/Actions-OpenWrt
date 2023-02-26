@@ -10,7 +10,7 @@
 
 
 # name: some string
-name: openwrt_xy-c5__with_small
+name: openwrt_mir3g__with_small
 
 on:
   repository_dispatch:
@@ -25,8 +25,8 @@ on:
 
 env:
   __ROOT_DIR__: config_openwrt
-  MODEL_NAME: xy-c5
-  FLAG_SMALL: small
+  MODEL_NAME: mir3g
+  FLAG_SMALL: small1
   TZ: Asia/Shanghai
   REPO_URL: https://github.com/openwrt/openwrt
   REPO_BRANCH: openwrt-21.02
