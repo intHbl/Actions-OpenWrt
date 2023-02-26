@@ -21,7 +21,7 @@ if [ -e "$__ROOT_DIR__/compile/config/models/${MODEL_NAME}.conf" ];then
         mv "$__ROOT_DIR__/$FEEDS_CONF.small" "$__ROOT_DIR__/$FEEDS_CONF" 
         ls -l "$__ROOT_DIR__/$FEEDS_CONF"
     else
-        echo "FLAG_SMALL=''" >> $GITHUB_ENV
+        echo "FLAG_SMALL=" >> $GITHUB_ENV
     fi
 fi
 

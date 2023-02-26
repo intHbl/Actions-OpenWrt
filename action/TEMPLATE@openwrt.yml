@@ -27,8 +27,6 @@ env:
   MODEL_NAME: <<<TODOMODEL_NAME>>>
   FLAG_SMALL: <<<TODOFLAG_SMALL>>>
   TZ: Asia/Shanghai
-  REPO_URL: https://github.com/openwrt/openwrt
-  REPO_BRANCH: openwrt-21.02
   FEEDS_CONF: compile/feeds.conf/feeds.conf.default
   CONFIG_FILE: compile/config.tmp
   DIY_P1_SH: compile/scripts/diy-part1.sh
@@ -46,8 +44,12 @@ jobs:
     # The ubuntu-18.04 environment is deprecated, consider switching to ubuntu-20.04(ubuntu-latest), or ubuntu-22.04 instead.
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@main
+    - uses: actions/checkout@v3
+
+    #- name: Checkout # name is optional
+    #  uses: actions/checkout@v3
+    #  with:
+    #    ref: <branch|tag|refHash>
 
     - name: gen feeds and config
       run : bash "action/gen_feeds_and_config.sh"
@@ -236,6 +238,7 @@ jobs:
         retain_days: 5
         keep_minimum_runs: 5
 
+## false {
     - name: Remove old Releases
       uses: dev-drprasad/delete-older-releases@v0.1.0
       if: env.UPLOAD_RELEASE == 'true' && !cancelled()
@@ -244,3 +247,4 @@ jobs:
         delete_tags: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+## }
