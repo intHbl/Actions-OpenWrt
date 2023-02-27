@@ -30,7 +30,8 @@ cd $GITHUB_WORKSPACE/openwrt/
 
 (
     # Modify default IP
-    sed -i 's/192.168.1.1/172.22.0.1/g' package/base-files/files/bin/config_generate
+    # sed -i 's/192.168.1.1/172.22.0.1/g' package/base-files/files/bin/config_generate
+    # netmask 255.255.255.0 -> 255.255.0.0
 
     # 修改Files大法权限
     if [ -d "files/" ];then
