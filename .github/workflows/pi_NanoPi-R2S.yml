@@ -28,8 +28,6 @@ env:
   MODEL_NAME: NanoPi-R2S
   FLAG_SMALL: false
   TZ: Asia/Shanghai
-  REPO_URL: https://github.com/openwrt/openwrt
-  REPO_BRANCH: openwrt-21.02
   FEEDS_CONF: compile/feeds.conf/feeds.conf.default
   CONFIG_FILE: compile/config.tmp
   DIY_P1_SH: compile/scripts/diy-part1.sh
@@ -43,54 +41,32 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
+    # The ubuntu-18.04 environment is deprecated, consider switching to ubuntu-20.04(ubuntu-latest), or ubuntu-22.04 instead.
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@main
+    - uses: actions/checkout@v3
+
+    #- name: Checkout # name is optional
+    #  uses: actions/checkout@v3
+    #  with:
+    #    ref: <branch|tag|refHash>
 
     - name: gen feeds and config
-      run : |
-        [ -e "$__ROOT_DIR__/$CONFIG_FILE" ] && rm "$__ROOT_DIR__/$CONFIG_FILE"
-        if [ -e "$__ROOT_DIR__/compile/config/models/${MODEL_NAME}.conf" ];then \
-            cat "$__ROOT_DIR__/compile/config/models/${MODEL_NAME}.conf" \
-              "$__ROOT_DIR__/compile/config/"*.conf > "$__ROOT_DIR__/$CONFIG_FILE" && ls -l "$__ROOT_DIR__/$CONFIG_FILE" ; \
-            if $FLAG_SMALL; then ( cat "$__ROOT_DIR__/compile/config/"*.conf.small >> "$__ROOT_DIR__/$CONFIG_FILE" ); \
-              mv "$__ROOT_DIR__/$FEEDS_CONF.small" "$__ROOT_DIR__/$FEEDS_CONF" && ls -l "$__ROOT_DIR__/$FEEDS_CONF" ; \
-            fi ; \
-        fi
+      run : bash "action/gen_feeds_and_config.sh"
 
 
     - name: Initialization environment
       env:
         DEBIAN_FRONTEND: noninteractive
-      run: |
-        sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc
-        sudo -E apt-get -qq update
-        sudo -E apt-get -qq install $(curl -fsSL git.io/depends-ubuntu-1804)
-        sudo -E apt-get -qq install tree
-        sudo -E apt-get -qq autoremove --purge
-        sudo -E apt-get -qq clean
-        sudo timedatectl set-timezone "$TZ"
-        sudo mkdir -p /workdir
-        sudo chown $USER:$GROUPS /workdir
-
-
+      run: bash "action/init_env.sh"
 
     - name: Clone source code
-      working-directory: /workdir
-      run: |
-        df -hT $PWD
-        git clone --single-branch -b $REPO_BRANCH $REPO_URL  openwrt
-        ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
+      run: bash "action/clone_openwrt.sh"
+
 
     - name: Load custom feeds
-      run: |
-        [ -e $__ROOT_DIR__/$FEEDS_CONF ] && \
-            mv $__ROOT_DIR__/$FEEDS_CONF openwrt/feeds.conf.default && echo "[INFO] mv feeds.conf.default to openwrt/"
-        chmod +x $__ROOT_DIR__/$DIY_P1_SH
-        cd openwrt/
-        $GITHUB_WORKSPACE/$__ROOT_DIR__/$DIY_P1_SH
+      run: bash "$__ROOT_DIR__/$DIY_P1_SH"
 
     - name: Update feeds
       run: cd openwrt && ./scripts/feeds update -a
@@ -99,14 +75,7 @@ jobs:
       run: cd openwrt && ./scripts/feeds install -a
 
     - name: Load custom configuration
-      run: |
-        [ -d $__ROOT_DIR__/files/ ] && \
-            mv $__ROOT_DIR__/files/ openwrt/ && echo "[Info] mv files/ to openwrt/"
-        [ -f $__ROOT_DIR__/$CONFIG_FILE ] && \
-            mv $__ROOT_DIR__/$CONFIG_FILE openwrt/.config && echo "[Info] mv .config to openwrt/"
-        chmod +x $__ROOT_DIR__/$DIY_P2_SH
-        cd openwrt/
-        $GITHUB_WORKSPACE/$__ROOT_DIR__/$DIY_P2_SH
+      run: bash "$__ROOT_DIR__/$DIY_P2_SH"
 
     - name: SSH connection to Actions
       uses: P3TERX/ssh2actions@v1.0.0
@@ -137,7 +106,7 @@ jobs:
       run: |
         cd openwrt
         echo -e "$(nproc) thread compile"
-        if make -j$(nproc) ;then echo "::set-output name=status::success";else echo "::set-output name=status::failed"; fi
+        if make -j$(nproc) ;then echo "status=success" >> $GITHUB_OUTPUT;else echo "status=failed" >> $GITHUB_OUTPUT; fi
 
 
     - name: Compile the firmware II
@@ -146,7 +115,7 @@ jobs:
       run: |
         cd openwrt
         echo -e "$(nproc) thread compile"
-        if make -j$(nproc) ;then echo "::set-output name=status::success";else echo "::set-output name=status::failed";  fi
+        if make -j$(nproc) ;then echo "status=success" >> $GITHUB_OUTPUT;else echo "status=failed" >> $GITHUB_OUTPUT;  fi
 
     - name: Compile the firmware III
       id: compileIII
@@ -154,7 +123,7 @@ jobs:
       run: |
         cd openwrt
         echo -e "1 thread compile"
-        if make -j1 ;then echo "::set-output name=status::success";else echo "::set-output name=status::failed";  fi
+        if make -j1 ;then echo "status=success" >> $GITHUB_OUTPUT;else echo "status=failed" >> $GITHUB_OUTPUT;  fi
 
     - name: Compile the firmware IV
       id: compileIV
@@ -162,14 +131,14 @@ jobs:
       run: |
         cd openwrt
         echo -e "1 thread compile"
-        if make -j1 V=s ;then echo "::set-output name=status::success";else echo "::set-output name=status::failed";  fi
+        if make -j1 V=s ;then echo "status=success" >> $GITHUB_OUTPUT;else echo "status=failed">> $GITHUB_OUTPUT;  fi
 
     - name: Compile the firmware finish
       id: compile
       if: steps.compileI.outputs.status == 'success' || steps.compileII.outputs.status == 'success' || steps.compileIII.outputs.status == 'success' || steps.compileIV.outputs.status == 'success'
       run: |
         cd openwrt
-        echo "::set-output name=status::success"
+        echo "status=success" >> $GITHUB_OUTPUT
         grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -r 's/.*DEVICE_(.*)=y/\1/' > DEVICE_NAME
         [ -s DEVICE_NAME ] && echo "DEVICE_NAME=_$(cat DEVICE_NAME)" >> $GITHUB_ENV
         echo "FILE_DATE=_$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
@@ -184,6 +153,7 @@ jobs:
       if: (!cancelled())
       run: df -hT
 
+# false -> x
     - name: Upload bin directory
       uses: actions/upload-artifact@main
       if: steps.compile.outputs.status == 'success' && env.UPLOAD_BIN_DIR == 'true'
@@ -198,22 +168,27 @@ jobs:
         cd openwrt/bin/targets/*/*
         rm -rf packages
         echo "FIRMWARE=$PWD" >> $GITHUB_ENV
-        echo "::set-output name=status::success"
+        echo "status=success" >> $GITHUB_OUTPUT
 
     - name: copy .config files to target
       if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
-      run: |
-        if $FLAG_SMALL;then _suffix="_with_small";fi
-        name=${MODEL_NAME}$_suffix.config
-        cp openwrt/.config  ${{ env.FIRMWARE }}/$name
+      run: cp openwrt/.config  ${{ env.FIRMWARE }}/${MODEL_NAME}.config
 
+    - name: some info 
+      run:  |
+        echo "::warning file=FLAG_SMALL::${FLAG_SMALL}"
+        echo "::warning file=sysupgrade::$(ls -alF "$FIRMWARE" | grep -i sysupgrade)"
+         
+
+# artifact
     - name: Upload firmware directory
       uses: actions/upload-artifact@main
       if: steps.organize.outputs.status == 'success' && !cancelled()
       with:
-        name: OpenWrt_firmware${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
+        name: OpenWrt_${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}${{ env.FLAG_SMALL }}
         path: ${{ env.FIRMWARE }}
 
+# false {
     - name: Upload firmware to cowtransfer
       id: cowtransfer
       if: steps.organize.outputs.status == 'success' && env.UPLOAD_COWTRANSFER == 'true' && !cancelled()
@@ -221,7 +196,8 @@ jobs:
         curl -fsSL git.io/file-transfer | sh
         ./transfer cow --block 2621440 -s -p 64 --no-progress ${FIRMWARE} 2>&1 | tee cowtransfer.log
         echo "::warning file=cowtransfer.com::$(cat cowtransfer.log | grep https)"
-        echo "::set-output name=url::$(cat cowtransfer.log | grep https | cut -f3 -d" ")"
+        echo "url=$(cat cowtransfer.log | grep https | cut -f3 -d" ")" >> $GITHUB_OUTPUT
+# }
 
 #UPLOAD_WETRANSFER
     - name: Upload firmware to WeTransfer
@@ -231,18 +207,20 @@ jobs:
         curl -fsSL git.io/file-transfer | sh
         ./transfer wet -s -p 16 --no-progress ${FIRMWARE} 2>&1 | tee wetransfer.log
         echo "::warning file=wetransfer.com::$(cat wetransfer.log | grep https)"
-        echo "::set-output name=url::$(cat wetransfer.log | grep https | cut -f3 -d" ")"
-        
+        echo "url=$(cat wetransfer.log | grep https | cut -f3 -d" ")" >> $GITHUB_OUTPUT
+
+## false {
+# release @tag
     - name: Generate release tag
       id: tag
       if: env.UPLOAD_RELEASE == 'true' && !cancelled()
       run: |
-        echo "::set-output name=release_tag::$(date +"%Y.%m.%d-%H%M")"
+        echo "release_tag=$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_OUTPUT
         touch release.txt
         [ $UPLOAD_COWTRANSFER = true ] && echo "🔗 [Cowtransfer](${{ steps.cowtransfer.outputs.url }})" >> release.txt
         [ $UPLOAD_WETRANSFER = true ] && echo "🔗 [WeTransfer](${{ steps.wetransfer.outputs.url }})" >> release.txt
-        echo "::set-output name=status::success"
-#release        
+        echo "status=success" >> $GITHUB_OUTPUT
+## release @upload
     - name: Upload firmware to release
       uses: softprops/action-gh-release@v1
       if: steps.tag.outputs.status == 'success' && !cancelled()
@@ -252,7 +230,8 @@ jobs:
         tag_name: ${{ steps.tag.outputs.release_tag }}
         body_path: release.txt
         files: ${{ env.FIRMWARE }}/*
-    
+## }
+
     - name: Delete workflow runs
 #      uses: GitRML/delete-workflow-runs@main
       uses: Mattraks/delete-workflow-runs@main
@@ -260,6 +239,7 @@ jobs:
         retain_days: 5
         keep_minimum_runs: 5
 
+## false {
     - name: Remove old Releases
       uses: dev-drprasad/delete-older-releases@v0.1.0
       if: env.UPLOAD_RELEASE == 'true' && !cancelled()
@@ -268,3 +248,4 @@ jobs:
         delete_tags: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+## }
