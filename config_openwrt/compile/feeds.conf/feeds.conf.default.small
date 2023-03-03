@@ -1,4 +1,8 @@
 
 
-src-git kenzo https://github.com/kenzok8/openwrt-packages^7470f45
-src-git small https://github.com/kenzok8/small^750e5dd
+#src-git kenzo https://github.com/kenzok8/openwrt-packages^7470f45
+#src-git small https://github.com/kenzok8/small^750e5dd
+
+src-git kenzo https://github.com/kenzok8/openwrt-packages
+src-git small https://github.com/kenzok8/small
+
