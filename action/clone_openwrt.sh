@@ -16,9 +16,9 @@
     # after clone
     if [ -n "$AFTER_CLONE_SH" ] && [ "$AFTER_CLONE_SH" != "false" ] && [ -f "$GITHUB_WORKSPACE/$AFTER_CLONE_SH" ];then
         (
-            cd openwrt
+            cd $GITHUB_WORKSPACE/openwrt
             echo "[Info] Run AFTER_CLONE_SH=$GITHUB_WORKSPACE/$AFTER_CLONE_SH"
-            bash "$AFTER_CLONE_SH"
+            bash "$GITHUB_WORKSPACE/$AFTER_CLONE_SH"
         )
     fi
 )
