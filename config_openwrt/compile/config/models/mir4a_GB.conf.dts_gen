@@ -1,0 +1,66 @@
+#!/bin/bash
+
+### 修改为{R4A千兆版,R3G_V2}Breed直刷版
+
+# ref:
+## https://www.right.com.cn/FORUM/thread-4052254-1-1.html
+## from https://github.com/XXKDB/MI-R4A-breed-openwrt/blob/main/MI-R4A/diy-part1.sh
+
+from_dts="mt7621_youhua_wr1200js.dts"
+dts="mt7621_xiaomi_mi-router-4a-3g-v2.dtsi"
+
+line1=$(grep  -a -n -e '&spi0 {' target/linux/ramips/dts/$dts |cut -d ":" -f 1)
+line2=$(grep  -a -n -e '&pcie {' target/linux/ramips/dts/$dts |cut -d ":" -f 1)
+line2=$(expr $line2 - 1)
+line2=$(echo $line2"d")
+sed -i $line1,$line2 target/linux/ramips/dts/$dts
+
+{
+    grep  -Pzo '&spi0[\s\S]*};[\s]*};[\s]*};[\s]*};' target/linux/ramips/dts/$from_dts | tr '\000' '\n'
+    echo ""
+} > youhua.txt
+
+line1=$((line1 - 1))
+line_replace="${line1}r"
+sed -i "$line_replace youhua.txt" target/linux/ramips/dts/$dts
+wcl="$(cat youhua.txt | wc -l)"
+cat target/linux/ramips/dts/$dts | head -n "$((line1+wcl+2))" | tail -n $((wcl+5))
+#rm -rf youhua.txt
+
+
+## 2.修改mt7621.mk
+devices="xiaomi_mi-router-4a-gigabit xiaomi_mi-router-3g-v2"
+
+device_from="youhua_wr1200js"
+zz0=$(grep  -a -n -e "define Device/$device_from" target/linux/ramips/image/mt7621.mk|cut -d ":" -f 1)
+zz00=$((zz0 + 8))
+
+# size="16064k"
+size="$(cat target/linux/ramips/image/mt7621.mk | head -n "$zz00" | tail -n 12 | grep "IMAGE_SIZE" | grep -Eo "[1-9][0-9]*.{0,1}" | head -n 1 )"
+echo "size=$size"
+
+ff(){
+    local zz0
+    local zz00
+    local n
+    zz0=$(grep  -a -n -e "define Device/$device" target/linux/ramips/image/mt7621.mk|cut -d ":" -f 1)
+    zz00=$((zz0 + 8))
+    
+    # size="16064k"
+    n="$(cat target/linux/ramips/image/mt7621.mk | head -n "$zz00" | tail -n 8 | grep -n "IMAGE_SIZE" | grep -Eo "^[1-9][0-9]*")"
+    ## openwrt . v21.03.5  == +3
+    zz1=$((zz0 + n))
+
+    sed  -i "${zz1}s/IMAGE_SIZE := .*/IMAGE_SIZE := $size/" target/linux/ramips/image/mt7621.mk
+
+    # show debug info
+    cat target/linux/ramips/image/mt7621.mk | head -n "$zz00" | tail -n 12
+}
+
+for i in $devices ; do
+    echo "############# $i"
+    device=$i
+    ff
+done
+
+

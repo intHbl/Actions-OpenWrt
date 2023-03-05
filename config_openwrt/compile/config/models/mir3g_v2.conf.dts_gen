@@ -1,0 +1,11 @@
+#!/bin/bash
+
+
+
+d="$(dirname "$0")"
+f="$d/mir4a_GB.conf.dts_gen"
+
+bash "$f"
+
+
+

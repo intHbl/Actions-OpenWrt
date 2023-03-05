@@ -15,8 +15,11 @@
 
     # after clone
     if [ -n "$AFTER_CLONE_SH" ] && [ "$AFTER_CLONE_SH" != "false" ] && [ -f "$AFTER_CLONE_SH" ];then
-        echo "[Info] Run AFTER_CLONE_SH=$AFTER_CLONE_SH"
-        bash "$AFTER_CLONE_SH"
+        (
+            cd openwrt
+            echo "[Info] Run AFTER_CLONE_SH=$AFTER_CLONE_SH"
+            bash "$AFTER_CLONE_SH"
+        )
     fi
 )
 
