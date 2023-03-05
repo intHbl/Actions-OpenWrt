@@ -27,6 +27,7 @@ env:
   __ROOT_DIR__: config_openwrt
   MODEL_NAME: mir3g
   FLAG_SMALL: small
+  AFTER_CLONE_SH: false
   TZ: Asia/Shanghai
   FEEDS_CONF: compile/feeds.conf/feeds.conf.default
   CONFIG_FILE: compile/config.tmp
@@ -63,7 +64,6 @@ jobs:
 
     - name: Clone source code
       run: bash "action/clone_openwrt.sh"
-
 
     - name: Load custom feeds
       run: bash "$__ROOT_DIR__/$DIY_P1_SH"

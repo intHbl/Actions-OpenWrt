@@ -12,5 +12,11 @@
     # git clone --single-branch -b $REPO_BRANCH $REPO_URL  openwrt
     git clone --single-branch -b $b $REPO_URL  openwrt
     ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
+
+    # after clone
+    if [ -n "$AFTER_CLONE_SH" ] && [ "$AFTER_CLONE_SH" != "false" ] && [ -f "$AFTER_CLONE_SH" ];then
+        echo "[Info] Run AFTER_CLONE_SH=$AFTER_CLONE_SH"
+        bash "$AFTER_CLONE_SH"
+    fi
 )
 

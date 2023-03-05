@@ -26,6 +26,7 @@ env:
   __ROOT_DIR__: <<<TODODIR>>>
   MODEL_NAME: <<<TODOMODEL_NAME>>>
   FLAG_SMALL: <<<TODOFLAG_SMALL>>>
+  AFTER_CLONE_SH: <<<TODOAFTER_CLONE_SH>>>
   TZ: Asia/Shanghai
   FEEDS_CONF: compile/feeds.conf/feeds.conf.default
   CONFIG_FILE: compile/config.tmp
@@ -62,7 +63,6 @@ jobs:
 
     - name: Clone source code
       run: bash "action/clone_openwrt.sh"
-
 
     - name: Load custom feeds
       run: bash "$__ROOT_DIR__/$DIY_P1_SH"
