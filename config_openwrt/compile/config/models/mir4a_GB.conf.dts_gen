@@ -48,7 +48,7 @@ ff(){
     
     # size="16064k"
     n="$(cat target/linux/ramips/image/mt7621.mk | head -n "$zz00" | tail -n 8 | grep -n "IMAGE_SIZE" | grep -Eo "^[1-9][0-9]*")"
-    ## openwrt . v21.03.5  == +3
+    ## openwrt . v21.02.5  == +3
     zz1=$((zz0 + n))
 
     sed  -i "${zz1}s/IMAGE_SIZE := .*/IMAGE_SIZE := $size/" target/linux/ramips/image/mt7621.mk
