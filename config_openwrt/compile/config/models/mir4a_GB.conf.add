@@ -1,0 +1,6 @@
+
+######## SSL
+# CONFIG_PACKAGE_libwolfssl is not set
+# CONFIG_WPA_WOLFSSL is not set
+CONFIG_PACKAGE_wpad-openssl=y
+CONFIG_PACKAGE_libustream-openssl=y

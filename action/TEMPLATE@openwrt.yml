@@ -52,8 +52,6 @@ jobs:
     #  with:
     #    ref: <branch|tag|refHash>
 
-    - name: gen feeds and config
-      run : bash "action/gen_feeds_and_config.sh"
 
 
     - name: Initialization environment
@@ -62,9 +60,12 @@ jobs:
       run: bash "action/init_env.sh"
 
     - name: Clone source code
-      run: bash "action/clone_openwrt.sh"
+      run: bash "action/clone_openwrt_and_after.sh"
 
-    - name: Load custom feeds
+    - name: after CLONE gen feeds and config
+      run : bash "action/gen_feeds_and_config.sh"
+
+    - name: Load custom feeds (and config)
       run: bash "$__ROOT_DIR__/$DIY_P1_SH"
 
     - name: Update feeds
