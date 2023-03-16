@@ -1,6 +1,13 @@
 
-######## SSL
-# CONFIG_PACKAGE_libwolfssl is not set
-# CONFIG_WPA_WOLFSSL is not set
+# CONFIG_DEFAULT_wpad-basic-wolfssl is not set
+# CONFIG_PACKAGE_wpad-basic-wolfssl is not set
 CONFIG_PACKAGE_wpad-openssl=y
+
+
+######## SSL
+# CONFIG_WPA_WOLFSSL is not set
+# CONFIG_PACKAGE_libwolfssl is not set
+
+# CONFIG_DEFAULT_libustream-wolfssl is not set
 CONFIG_PACKAGE_libustream-openssl=y
+
