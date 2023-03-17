@@ -1,7 +1,8 @@
 
 # CONFIG_DEFAULT_wpad-basic-wolfssl is not set
 # CONFIG_PACKAGE_wpad-basic-wolfssl is not set
-CONFIG_PACKAGE_wpad-openssl=y
+# CONFIG_PACKAGE_wpad-openssl is not set
+CONFIG_PACKAGE_wpad=y
 
 
 ######## SSL
