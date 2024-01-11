@@ -25,13 +25,27 @@ if [ -f "$modelconf" ];then
     
     # small
     if [ -n "$FLAG_SMALL" ] && [ "x$FLAG_SMALL" != "xnone" ] && [ "x$FLAG_SMALL" != "xfalse" ]; then
-        (
-            cat "$__ROOT_DIR__/compile/config/"*.conf."$FLAG_SMALL"
-        ) >> "$__ROOT_DIR__/$CONFIG_FILE"
+
         if [ -z "$FLAG_NEWEST" ];then
+            (
+                cat "$__ROOT_DIR__/compile/config/"*.conf."$FLAG_SMALL"
+            ) >> "$__ROOT_DIR__/$CONFIG_FILE"
             cat "$__ROOT_DIR__/$FEEDS_CONF.small" >> "$__ROOT_DIR__/$FEEDS_CONF" 
         else
             # 最新 version
+            {
+            cat <<EOF
+CONFIG_PACKAGE_luci-app-passwall=y
+CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Shadowsocks_Libev_Client=y
+CONFIG_PACKAGE_luci-app-passwall_INCLUDE_ShadowsocksR_Libev_Client=y
+CONFIG_PACKAGE_luci-app-passwall_INCLUDE_V2ray=y
+
+CONFIG_PACKAGE_luci-app-openclash=y
+
+CONFIG_PACKAGE_luci-app-eqos=y
+CONFIG_PACKAGE_luci-app-smartdns=y
+EOF
+            } >> "$__ROOT_DIR__/$CONFIG_FILE"
             cat "$__ROOT_DIR__/$FEEDS_CONF.small.newest" >> "$__ROOT_DIR__/$FEEDS_CONF"
         fi
         ls -l "$__ROOT_DIR__/$FEEDS_CONF"
