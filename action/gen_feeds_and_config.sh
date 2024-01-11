@@ -28,8 +28,12 @@ if [ -f "$modelconf" ];then
         (
             cat "$__ROOT_DIR__/compile/config/"*.conf."$FLAG_SMALL"
         ) >> "$__ROOT_DIR__/$CONFIG_FILE"
-
-        cat "$__ROOT_DIR__/$FEEDS_CONF.small" >> "$__ROOT_DIR__/$FEEDS_CONF" 
+        if [ -z "$FLAG_NEWEST" ];then
+            cat "$__ROOT_DIR__/$FEEDS_CONF.small" >> "$__ROOT_DIR__/$FEEDS_CONF" 
+        else
+            # 最新 version
+            cat "$__ROOT_DIR__/$FEEDS_CONF.small.newest" >> "$__ROOT_DIR__/$FEEDS_CONF"
+        fi
         ls -l "$__ROOT_DIR__/$FEEDS_CONF"
     else
         echo "FLAG_SMALL=" >> $GITHUB_ENV
