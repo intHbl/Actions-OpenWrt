@@ -10,7 +10,7 @@
 
 
 # name: some string
-name: openwrt_mir4a_GB__with_small1
+name: openwrt_mir4a_GB__with_small1_and_newest
 
 on:
   repository_dispatch:
