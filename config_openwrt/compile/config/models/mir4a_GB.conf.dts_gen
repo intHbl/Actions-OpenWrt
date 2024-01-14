@@ -1,5 +1,36 @@
 #!/bin/bash
 
+
+cat <<EOF
+# 防火墙 打开端口
+python.exe -m http.server -b 0.0.0.0 -d .  28080
+
+telnet 192.168.1.1
+
+wget http://192.168.1.2:28080/openwrt-ramips-mt7621-xiaomi_mi-router-4a-gigabit-squashfs-sysupgrade.bin
+wget http://192.168.1.3:28080/openwrt-ramips-mt7621-xiaomi_mi-router-4a-gigabit-squashfs-sysupgrade.bin
+
+
+# erase 长度>=需要输入的长度
+flash erase 0x180000 0xcd2462
+flash write 0x180000 0x80001000 0xcd0462
+
+# env  , 开启env(envconf,在web界面弄好一点)
+autoboot.command=boot flash 0x180000
+env set autoboot.command boot flash 0x180000
+env set key value
+env save
+
+# 重启
+reset
+
+# 还需要解决信号问题 eeprom
+
+EOF
+
+
+# 下面不好使了
+exit 0
 # 最新版执行失败, 不执行. 也许 已经适配了
 # exit 0 
 #  还是不行啊.   initramfs可以启动, but  sysupgrade 不能启动!!!
