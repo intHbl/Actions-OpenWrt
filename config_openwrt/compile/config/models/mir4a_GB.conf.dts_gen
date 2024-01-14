@@ -1,7 +1,10 @@
 #!/bin/bash
 
-# 最新版执行失败, 不执行. 也是 已经适配了
-exit 0
+# 最新版执行失败, 不执行. 也许 已经适配了
+# exit 0 
+#  还是不行啊.   initramfs可以启动, but  sysupgrade 不能启动!!!
+# 所以 修改脚本. # v23.05.2 比 # v21.02.5 多了个 xiaomi_mi-router-4a-gigabit-v2
+##  使用 grep  'xiaomi_mi-router-4a-gigabit$'
 
 ### 修改为{R4A千兆版,R3G_V2}Breed直刷版
 
@@ -10,10 +13,13 @@ exit 0
 ## from https://github.com/XXKDB/MI-R4A-breed-openwrt/blob/main/MI-R4A/diy-part1.sh
 
 from_dts="mt7621_youhua_wr1200js.dts"
+# v21.02.5
 dts="mt7621_xiaomi_mi-router-4a-3g-v2.dtsi"
+# v23.05.2
+dst="mt7621_xiaomi_mi-router-4a-common.dtsi"
 
-line1=$(grep  -a -n -e '&spi0 {' target/linux/ramips/dts/$dts |cut -d ":" -f 1)
-line2=$(grep  -a -n -e '&pcie {' target/linux/ramips/dts/$dts |cut -d ":" -f 1)
+line1=$(grep  -a -n -e '&spi0 {' target/linux/ramips/dts/$dts | head -n 1 |cut -d ":" -f 1)
+line2=$(grep  -a -n -e '&pcie {' target/linux/ramips/dts/$dts | head -n 1 |cut -d ":" -f 1)
 line2=$(expr $line2 - 1)
 line2=$(echo $line2"d")
 sed -i $line1,$line2 target/linux/ramips/dts/$dts
@@ -35,18 +41,18 @@ cat target/linux/ramips/dts/$dts | head -n "$((line1+wcl+2))" | tail -n $((wcl+5
 devices="xiaomi_mi-router-4a-gigabit xiaomi_mi-router-3g-v2"
 
 device_from="youhua_wr1200js"
-zz0=$(grep  -a -n -e "define Device/$device_from" target/linux/ramips/image/mt7621.mk|cut -d ":" -f 1)
+zz0=$(grep  -a -n -e "define Device/$device_from" target/linux/ramips/image/mt7621.mk | head -n 1 |cut -d ":" -f 1)
 zz00=$((zz0 + 8))
 
 # size="16064k"
-size="$(cat target/linux/ramips/image/mt7621.mk | head -n "$zz00" | tail -n 12 | grep "IMAGE_SIZE" | grep -Eo "[1-9][0-9]*.{0,1}" | head -n 1 )"
+size="$(cat target/linux/ramips/image/mt7621.mk | head -n "$zz00" | tail -n 8 | grep "IMAGE_SIZE" | grep -Eo "[1-9][0-9]*.{0,1}" | head -n 1 )"
 echo "size=$size"
 
 ff(){
     local zz0
     local zz00
     local n
-    zz0=$(grep  -a -n -e "define Device/$device" target/linux/ramips/image/mt7621.mk|cut -d ":" -f 1)
+    zz0=$(grep  -a -n -e "define Device/$device$" target/linux/ramips/image/mt7621.mk | head -n 1 | cut -d ":" -f 1)
     zz00=$((zz0 + 8))
     
     # size="16064k"
