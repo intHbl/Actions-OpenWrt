@@ -46,7 +46,14 @@ CONFIG_PACKAGE_iptables-mod-socket=y
 
 CONFIG_PACKAGE_luci-app-eqos=y
 CONFIG_PACKAGE_luci-app-smartdns=y
+
 EOF
+            if [ "$MODEL_NAME" == "xy-c5" ] || [ "$MODEL_NAME" == "xy-c3" ];then
+                echo "CONFIG_PACKAGE_luci-app-passwall_Iptables_Transparent_Proxy=y"
+                echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Hysteria=y"
+                echo "CONFIG_PACKAGE_luci-app-passwall_INCLUDE_V2ray_Plugin=y"
+            fi
+            
             } >> "$__ROOT_DIR__/$CONFIG_FILE"
             cat "$__ROOT_DIR__/$FEEDS_CONF.small.newest" >> "$__ROOT_DIR__/$FEEDS_CONF"
         fi
